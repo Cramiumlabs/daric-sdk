@@ -1,0 +1,66 @@
+Daric Open Source Project - Third-Party Licenses and Attributions
+
+This file contains licensing information for third-party software and components 
+included in the Daric project.
+
+--------------------------------------------------------------------------------
+1. Core Libraries and Toolchain
+--------------------------------------------------------------------------------
+
+- mbedtls
+  License: Apache License 2.0
+  Source: https://github.com/ARMmbed/mbedtls
+  Path: middleware/third_party/mbedtls/
+
+- CMSIS (Cortex Microcontroller Software Interface Standard)
+  License: Apache License 2.0
+  Source: https://github.com/ARM-software/CMSIS_5
+  Path: middleware/third_party/cmsis/
+
+- ThreadX (Azure RTOS)
+  License: MIT License
+  Source: https://github.com/eclipse-threadx/threadx
+  Origin: Microsoft Corporation / Eclipse Foundation
+  Path: middleware/third_party/threadx/
+
+- Newlib (Standard C Library)
+  License: Various BSD-like licenses
+  Source: https://sourceware.org/newlib/
+  Used via toolchain hooks in: middleware/third_party/libc/newlib/
+
+--------------------------------------------------------------------------------
+2. SDK Core & Internal Drivers
+--------------------------------------------------------------------------------
+
+- PULP Project & GreenWaves Technologies
+  License: Apache License 2.0
+  Origin: ETH Zurich, University of Bologna, and GreenWaves Technologies.
+  Description: The underlying UDMA (Universal Direct Memory Access) architecture 
+  and related peripheral drivers (UART, I2C, SPIM, SDIO, etc.) in the `drivers/` 
+  directory are integrated and adapted from the PULP (Parallel Ultra Low Power) 
+  open-source platform and GreenWaves Technologies' reference implementations.
+  Path: drivers/ (UDMA-related modules)
+
+--------------------------------------------------------------------------------
+3. Hardware Vendor Components
+--------------------------------------------------------------------------------
+
+The following drivers are provided based on vendor-supplied reference code,
+adapted and modified by the Daric Team for the CrossBar SoC platforms.
+Original copyright notices are retained within the source files.
+
+- Awinic (LED Driver)
+  Components: AW2023
+  Path: bsp/Components/AW2023/
+
+- Hynitron (Touch Controller)
+  Components: CST9220, CST92xx
+  Path: bsp/Components/CST9220/
+
+- Solomon Systech (E-Paper Display)
+  Components: SSD1680
+  Path: bsp/Components/LCD-ED028TC1/ (referenced in display modules)
+
+- Maolong / MLB (Fingerprint Sensor)
+  Components: E088N
+  Path: bsp/Daric-EVB-NTO/daric_fingerprint.c

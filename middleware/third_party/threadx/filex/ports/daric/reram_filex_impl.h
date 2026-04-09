@@ -1,0 +1,85 @@
+/**
+ ******************************************************************************
+ * @file    reram_filex_impl.h
+ * @author  OS Team
+ * @brief   Header file of filex module.
+******************************************************************************
+* @attention
+*
+* © Copyright CrossBar, Inc. 2024.
+*
+* All rights reserved.
+*
+* This software is the proprietary property of CrossBar, Inc. and is protected
+* by copyright laws. Any unauthorized reproduction, distribution, or
+* modification is strictly prohibited.
+*
+******************************************************************************
+*/
+
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef _RERAM_FILEX_IMPL_H_
+#define _RERAM_FILEX_IMPL_H_
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/* Includes ------------------------------------------------------------------*/
+#include <stdint.h>
+#include "tx_api.h"
+#include "fx_api.h"
+
+/**
+ * @brief Use the t_ReramDiskInfo structure to manage an independent file system.
+ *
+ */
+typedef struct {
+    FX_MEDIA    *mediaPtr;          /* Pointer to media control block */
+    UINT        diskBaseAddr;       /* start address of reram disk */
+    UCHAR       *cache;             /* Media buffer pointer */
+    UINT        cacheSize;          /* Media buffer size */
+    CHAR        *volName;           /* Volume name */
+    UINT        numOfFats;          /* Number of FATs */
+    UINT        dirEntries;         /* Directory entries */
+    UINT        hiddenSects;        /* Hidden sectors */
+    ULONG       totalSects;         /* Total sectors */
+    UINT        bytesPerSect;       /* Sector size */
+    UINT        sectPerCluster;     /* Sectors per cluster */
+    UINT        bInitialed;         /* Initialization has been completed */
+} t_ReramDiskInfo;
+
+
+/**
+ * @brief  Initializes the filex disk info according to the specified parameters.
+ * @param  reramDiskInfo Pointer to a t_ReramDiskInfo structure that contains
+ *         the configuration information for the specified filex disk.
+ * @retval FS status indicating the success or error of the initialization process,
+ *         FX_SUCCESS means success, return a non-zero value means failure.
+ * 
+ * This function configures the filex disk according to the parameters specified
+ * in the t_ReramDiskInfo structure, including cache, numOfFats, and other
+ * relevant settings.
+ */
+extern uint32_t reRamFilexDiskLoad(t_ReramDiskInfo *reramDiskInfo);
+
+/**
+ * @brief  Format the file system specified by the parameters.
+ * @param  reramDiskInfo Pointer to a t_ReramDiskInfo structure that contains
+ *         the configuration information for the specified filex disk.
+ * @retval FS status indicating the success or error of the initialization process,
+ *         FX_SUCCESS means success, return a non-zero value means failure.
+ * 
+ * This function format the file system specified by the parameters.
+ * Please note that this interface will destroy the data on the file system. 
+ * Make sure that the data on the disk is no longer needed 
+ * before calling this interface.
+ */
+extern uint32_t reRamFilexDiskFormat(t_ReramDiskInfo *reramDiskInfo);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

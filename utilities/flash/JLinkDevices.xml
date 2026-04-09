@@ -1,0 +1,6 @@
+<Database>
+  <Device>
+    <ChipInfo Vendor="Crossbar" Name="DARIC_NTO" Core="JLINK_CORE_CORTEX_M7" WorkRAMAddr="0x61000000" WorkRAMSize="0x00200000" />
+    <FlashBankInfo Name="ReRAM" BaseAddr="0x60000000" MaxSize="0x00300000" Loader="daric_reram.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1" />
+  </Device>
+</Database>
