@@ -1,0 +1,11 @@
+.vscode
+**/MDK-ARM/JLinkLog.txt
+**/MDK-ARM/JLinkSettings.ini
+**/MDK-ARM/*.uvguix.*
+**/MDK-ARM/Listings/
+**/MDK-ARM/Objects/
+**/MDK-ARM/bin/
+**/MDK-ARM/RTE/
+**/MDK-ARM/EventRecorderStub.scvd
+**/MDK-ARM/build_output.log
+**/GCC/out

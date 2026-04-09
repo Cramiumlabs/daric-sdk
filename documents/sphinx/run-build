@@ -1,0 +1,170 @@
+#! /bin/sh
+# build the documentation
+
+ERROR() {
+  printf 'error: '
+  printf "${@}"
+  printf '\n'
+  exit 1
+}
+
+VERBOSE() {
+  [ X"${verbose}" = X"no" ] && return 0
+  printf "${@}"
+  printf '\n'
+}
+
+USAGE() {
+  if [ -n "${1}" ]
+  then
+    printf 'error: '
+    printf "${@}"
+    printf '\n'
+  fi
+  cat <<EOF
+usage: ${0##*/} [options]
+       --help                 -h            this message
+       --verbose              -v            more messages
+       --build=DIR            -b DIR        build directory [${build}]
+       --install              -i            display required/optional packages to install
+       --pdf                  -p            create PDF output from Doxygen
+       --target=TGT           -t TGT        cmake target [${target}]
+       --debug                -D            show debug information
+EOF
+  exit 1
+}
+
+# main program
+verbose=no
+debug=no
+build=build
+install=no
+pdf=no
+target=daric_sphinx
+
+# determine versioned name for the PDF
+# use tag if avalailable else use commit hash truncated to N characters
+N=16
+hash="$(git --no-pager log -n 1 --format='%<(12)%H' | cut -c "1-${N}")"
+tag="$(git --no-pager tag --points-at HEAD | grep '^v' | sort -ur | head -n 1)"
+[ -z "${tag}" ] && tag="${hash}"
+pdf_file="refman-${tag}.pdf"
+
+# parse options
+while getopts :hvb:ipt:D-: option
+do
+  # convert long options
+  if [ X"${option}" = X"-" ]
+  then
+    option="${OPTARG%%=*}"
+    OPTARG="${OPTARG#${option}}"
+    OPTARG="${OPTARG#=}"
+  fi
+  case "${option}" in
+    (v|verbose)
+      verbose=yes
+      ;;
+
+    (b|build)
+      build="${OPTARG}"
+      ;;
+
+    (i|install)
+      install=yes
+      ;;
+
+    (p|pdf)
+      pdf=yes
+      ;;
+
+    (t|target)
+      target="${OPTARG}"
+      ;;
+
+    (--)
+      break
+      ;;
+
+    (D|debug)
+      debug=yes
+      ;;
+
+    (h|help)
+      USAGE
+      ;;
+
+    ('?')
+      USAGE 'invalid option: -%s' "${OPTARG}"
+      ;;
+
+    (*)
+      USAGE 'invalid option: --%s' "${option}"
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+# verify arguments
+[ ${#} -ne 0 ] && USAGE 'extraneous arguments: %s' "${*}"
+
+[ X"${pdf}" != X"no" ] && [ X"${install}" != X"no" ] && USAGE 'conflicting install and pdf options'
+
+# enable debuging
+[ X"${debug}" = X"yes" ] && set -x
+
+if [ X"${install}" = X"yes" ]
+then
+  # OS specific items
+  os="$(uname -s)"
+  VERBOSE 'os: %s' "${os}"
+  printf 'install the following packages: sphinx, breathe, doxygen and optionally latex(xetex), graphvis\n'
+  case "${os}" in
+    (Linux)
+      printf 'Ubuntu required: sudo apt install sphinx breathe doxygen\n'
+      printf 'Ubuntu optional: sudo apt install texlive-xetex graphvis\n'
+      ;;
+    (FreeBSD)     
+      printf 'FreeBSD required: doas pkg install doxygen py311-sphinx py311-breathe\n'
+      printf 'FreeBSD optional: doas pkg install tex-xetex graphviz\n'
+      ;;
+    (*)
+      printf 'use package manager for: %s\n' "${os}"
+      ;;
+  esac
+  exit 0
+fi
+
+# clean old build directory and full rebuild
+[ -d "${build}" ] && rm -fr "${build}"
+mkdir -p "${build}" || ERROR 'cannot create directory: %s' "${build}"
+cd "${build}" || ERROR 'cannot change to directory: %s' "${build}"
+
+opts=
+OPT() {
+  opts="${opts} ${*}"
+}
+
+[ X"${pdf}" = X"yes"  ] && OPT 'PDF=YES'
+
+VERBOSE 'cmake opts: %s' "${opts}"
+env ${opts} cmake .. || ERROR 'initial cmake failed'
+cmake --build . --target "${target}" || ERROR 'cmake failed to build: %s' "${target}"
+
+latex_dir=latex
+pdf_src="refman.pdf"
+pdf_log=pdf_generate.log
+if [ X"${pdf}" = X"yes"  ] && [ -d "${latex_dir}" ]
+then
+  cd "${latex_dir}" || ERROR 'cannot change to directory: %s' "${latex_dir}"
+  [ -f Makefile ] || ERROR 'missing makefile for PDF genertion'
+  printf 'building PDF…\n'
+  make pdf > "${pdf_log}" 2>&1 || ERROR 'make pdf failed'
+  if [ -f "${pdf_src}" ]
+  then
+    cp -p "${pdf_src}" "${pdf_file}"
+    printf 'PDF output: %s/%s\n' "${PWD}" "${pdf_file}"
+  else
+    ERROR 'failed to generate PDF, see: %s/%s' "${PWD}" "${pdf_log}"
+  fi
+fi
