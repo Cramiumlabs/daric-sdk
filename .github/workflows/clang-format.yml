@@ -1,0 +1,55 @@
+name: Code Style (clang-format)
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  clang-format:
+    name: clang-format check
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends clang-format
+
+      - name: Check changed C/H files
+        run: |
+          # Collect C/C++ files changed in this PR
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E '\.(c|h|cpp|hpp)$' || true)
+
+          if [ -z "$CHANGED" ]; then
+            echo "No C/C++ files changed — skipping format check."
+            exit 0
+          fi
+
+          echo "Files to check:"
+          printf '  %s\n' $CHANGED
+          echo ""
+
+          # --dry-run: print what would change without modifying files
+          # --Werror:  exit non-zero if any file is not correctly formatted
+          # --style=file: use the .clang-format in the repo root
+          FAILED=0
+          for f in $CHANGED; do
+            if ! clang-format --dry-run --Werror --style=file "$f" 2>&1; then
+              FAILED=1
+            fi
+          done
+
+          if [ "$FAILED" -ne 0 ]; then
+            echo ""
+            echo "Format check failed. Run the following locally to fix:"
+            echo "  clang-format --style=file -i <file>"
+            exit 1
+          fi
+
+          echo "All files are correctly formatted."

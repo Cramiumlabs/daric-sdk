@@ -58,3 +58,19 @@ jobs:
             projects/evb_nto/${{ matrix.project }}/GCC/out/**/*.bin
             projects/evb_nto/${{ matrix.project }}/GCC/out/**/*.hex
           if-no-files-found: warn
+
+  # Aggregator job: single required status check that covers all matrix builds.
+  # Branch protection only needs to require "All GCC Builds" instead of 7 individual jobs.
+  all-builds:
+    name: All GCC Builds
+    runs-on: ubuntu-latest
+    needs: build
+    if: always()
+    steps:
+      - name: Check all builds passed
+        run: |
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "One or more GCC builds failed"
+            exit 1
+          fi
+          echo "All GCC builds passed"
