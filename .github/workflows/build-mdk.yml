@@ -1,0 +1,64 @@
+name: Build (Keil MDK / armclang)
+
+# Keil MDK builds require a self-hosted Windows runner with Keil MDK installed.
+#
+# Setup steps for the self-hosted runner:
+#   1. Install Keil MDK from https://www.keil.com/download/product/
+#   2. Ensure a valid MDK license is activated on the machine.
+#   3. Register the machine as a GitHub self-hosted runner:
+#      Repository > Settings > Actions > Runners > New self-hosted runner
+#   4. Add the 'keil-mdk' label to the runner during setup.
+#
+# Once the runner is ready, change the trigger below from 'workflow_dispatch'
+# to push/pull_request (same as build-gcc.yml) to enable automatic builds.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-mdk:
+    name: Build ${{ matrix.name }} (MDK)
+    runs-on: [self-hosted, windows, keil-mdk]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: alu_demo
+            uvprojx: projects\evb_nto\bare_metal\alu_demo\MDK-ARM\uart_demo.uvprojx
+            target: uart_demo
+          - name: uart_demo
+            uvprojx: projects\evb_nto\bare_metal\uart_demo\MDK-ARM\uart_demo.uvprojx
+            target: uart_demo
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.name }} with Keil MDK
+        shell: pwsh
+        run: |
+          $uvExe = "C:\Keil_v5\UV4\UV4.exe"
+          if (-not (Test-Path $uvExe)) {
+            Write-Error "Keil MDK UV4.exe not found at $uvExe. Check MDK installation path."
+            exit 1
+          }
+          $logFile = "${{ matrix.name }}_build.txt"
+          & $uvExe -b "${{ matrix.uvprojx }}" -j0 -t "${{ matrix.target }}" -o $logFile
+          $exitCode = $LASTEXITCODE
+          if (Test-Path $logFile) { Get-Content $logFile }
+          # UV4 exit codes: 0 = success, 1 = warnings only (treated as success)
+          # 2 = errors, 3+ = fatal errors
+          if ($exitCode -gt 1) {
+            Write-Error "MDK build failed with exit code $exitCode"
+            exit $exitCode
+          }
+
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-mdk
+          path: |
+            projects\evb_nto\bare_metal\${{ matrix.name }}\MDK-ARM\Objects\*.axf
+            projects\evb_nto\bare_metal\${{ matrix.name }}\MDK-ARM\Objects\*.bin
+          if-no-files-found: warn

@@ -1,0 +1,60 @@
+name: Build (GCC/CMake)
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: bare_metal/aes_demo
+            name: aes_demo
+          - project: bare_metal/alu_demo
+            name: alu_demo
+          - project: bare_metal/ecdsa_demo
+            name: ecdsa_demo
+          - project: bare_metal/hash_demo
+            name: hash_demo
+          - project: bare_metal/trng_demo
+            name: trng_demo
+          - project: bare_metal/uart_demo
+            name: uart_demo
+          - project: threadx_demo
+            name: threadx_demo
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ARM GNU Toolchain 14.3.Rel1
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: '14.3.Rel1'
+
+      - name: Install CMake and Ninja
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends cmake ninja-build
+
+      - name: Build ${{ matrix.name }}
+        run: bash projects/evb_nto/${{ matrix.project }}/GCC/scripts/build.sh -c
+
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-gcc
+          path: |
+            projects/evb_nto/${{ matrix.project }}/GCC/out/**/*.elf
+            projects/evb_nto/${{ matrix.project }}/GCC/out/**/*.bin
+            projects/evb_nto/${{ matrix.project }}/GCC/out/**/*.hex
+          if-no-files-found: warn
