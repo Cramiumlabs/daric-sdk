@@ -1,3 +1,6 @@
+# ⚠️ [DEPRECATED] This repository has been moved to [https://github.com/crossbar-inc/daric-sdk]
+[![DEPRECATED](https://img.shields.io/badge/STATUS-DEPRECATED-red.svg)](https://github.com/crossbar-inc/daric-sdk)
+
 ## Daric SDK
 
 Daric SDK is a comprehensive software development kit providing drivers, middleware, and tools for firmware development on Daric hardware platforms.
